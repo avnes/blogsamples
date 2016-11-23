@@ -1,5 +1,5 @@
 ---
-- name: Fedora customizations
+- name: Fedora system-wide customizations
   hosts: localhost
   become: yes
   become_method: sudo
@@ -19,6 +19,9 @@
       - libselinux-python
       - lsof
       - nmap
+      - numix-gtk-theme
+      - numix-icon-theme
+      - numix-icon-theme-circle
       - python2
       - python2-dnf
       - sed
@@ -103,3 +106,15 @@
       dnf: state=present name={{ item }}
       with_items:
       - vlc
+
+- name: Fedora user customizations
+  hosts: localhost
+  become: no
+  tasks:
+    - name: Setting the Numix GTK theme
+      command: /usr/bin/gsettings set org.gnome.desktop.interface gtk-theme "Adwaita-dark"
+
+    - name: Setting the Numix icon theme
+      shell: /usr/bin/gsettings set org.gnome.desktop.interface icon-theme "Numix-Circle-Light"
+
+    - debug: msg="Use the command 'gsettings list-keys org.gnome.desktop.interface' to see more options"
