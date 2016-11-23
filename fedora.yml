@@ -1,0 +1,105 @@
+---
+- name: Fedora customizations
+  hosts: localhost
+  become: yes
+  become_method: sudo
+  vars:
+    fedora_version: 25
+  tasks:
+    - name: Install software from official repos
+      dnf: state=present name={{ item }}
+      with_items:
+      - brasero
+      - chromium
+      - cpio
+      - curl
+      - git
+      - gnome-tweak-tool
+      - keepassx
+      - libselinux-python
+      - lsof
+      - nmap
+      - python2
+      - python2-dnf
+      - sed
+      - sysstat
+      - tar
+      - unzip
+      - vim
+      - wget
+      - zip
+
+    - name: Remove unwanted software
+      dnf: state=absent name={{ item }}
+      with_items:
+      - evolution
+      - rhythmbox
+      - firefox
+
+    - name: Update all software
+      dnf: state=latest name=*
+
+    - name: Service sshd is enabled and started
+      service: name=sshd enabled=yes state=started
+
+    - name: Service firewalld is enabled and started
+      service: name=firewalld enabled=yes state=started
+
+    - name: Download GPG keys from RPM Fusion free
+      get_url:
+        url: http://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-free-fedora-{{ fedora_version }}
+        dest: /etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-{{ fedora_version }}
+        mode: 0644
+
+    - name: Download GPG keys from RPM Fusion nonfree
+      get_url:
+        url: http://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-nonfree-fedora-{{ fedora_version }}
+        dest: /etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-{{ fedora_version }}
+        mode: 0644
+
+    - name: Enable RPM Fusion free
+      yum_repository:
+        name: rpmfusion-free
+        description: RPM Fusion for Fedora $releasever - Free
+        baseurl: http://download1.rpmfusion.org/free/fedora/releases/$releasever/Everything/$basearch/os/
+        metalink: https://mirrors.rpmfusion.org/metalink?repo=free-fedora-$releasever&arch=$basearch
+        enabled: 1
+        metadata_expire: 14d
+        gpgcheck: 1
+        gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-$releasever
+
+    - name: Enable RPM Fusion free updates
+      yum_repository:
+        name: rpmfusion-free-updates
+        description: RPM Fusion for Fedora $releasever - Free - Updates
+        baseurl: http://download1.rpmfusion.org/free/fedora/updates/$releasever/$basearch/
+        metalink: https://mirrors.rpmfusion.org/metalink?repo=free-fedora-updates-released-$releasever&arch=$basearch
+        enabled: 1
+        gpgcheck: 1
+        gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-$releasever
+
+    - name: Enable RPM Fusion nonfree
+      yum_repository:
+        name: rpmfusion-nonfree
+        description: RPM Fusion for Fedora $releasever - Nonfree
+        baseurl: http://download1.rpmfusion.org/nonfree/fedora/releases/$releasever/Everything/$basearch/os/
+        metalink: https://mirrors.rpmfusion.org/metalink?repo=nonfree-fedora-$releasever&arch=$basearch
+        enabled: 1
+        metadata_expire: 14d
+        gpgcheck: 1
+        gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-$releasever
+
+    - name: Enable RPM Fusion nonfree updates
+      yum_repository:
+        name: rpmfusion-nonfree-updates
+        description: RPM Fusion for Fedora $releasever - Nonfree - Updates
+        baseurl: http://download1.rpmfusion.org/nonfree/fedora/updates/$releasever/$basearch/
+        metalink: https://mirrors.rpmfusion.org/metalink?repo=nonfree-fedora-updates-released-$releasever&arch=$basearch
+        enabled: 1
+        gpgcheck: 1
+        gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-$releasever
+
+    - name: Install software from unofficial repos
+      dnf: state=present name={{ item }}
+      with_items:
+      - vlc
