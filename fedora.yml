@@ -3,8 +3,6 @@
   hosts: localhost
   become: yes
   become_method: sudo
-  vars:
-    fedora_version: 25
   tasks:
     - name: Install software from official repos
       dnf: state=present name={{ item }}
@@ -13,9 +11,12 @@
       - chromium
       - cpio
       - curl
+      - docker
       - git
       - gnome-tweak-tool
       - keepassx
+      - kernel-devel
+      - kernel-headers
       - libselinux-python
       - lsof
       - nmap
@@ -24,6 +25,9 @@
       - numix-icon-theme-circle
       - python2
       - python2-dnf
+      - python2-flake8
+      - python2-tox
+      - python2-virtualenv
       - sed
       - sysstat
       - tar
@@ -48,16 +52,22 @@
     - name: Service firewalld is enabled and started
       service: name=firewalld enabled=yes state=started
 
+ #   - name: Enable official VirtualBox repo
+ #     get_url:
+ #       url: http://download.virtualbox.org/virtualbox/rpm/fedora/virtualbox.repo
+ #       dest: /etc/yum.repos.d/virtualbox.repo
+ #       mode: 0644
+
     - name: Download GPG keys from RPM Fusion free
       get_url:
-        url: http://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-free-fedora-{{ fedora_version }}
-        dest: /etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-{{ fedora_version }}
+        url: http://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-free-fedora-{{ ansible_distribution_version }}
+        dest: /etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-{{ ansible_distribution_version }}
         mode: 0644
 
     - name: Download GPG keys from RPM Fusion nonfree
       get_url:
-        url: http://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-nonfree-fedora-{{ fedora_version }}
-        dest: /etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-{{ fedora_version }}
+        url: http://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-nonfree-fedora-{{ ansible_distribution_version }}
+        dest: /etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-{{ ansible_distribution_version }}
         mode: 0644
 
     - name: Enable RPM Fusion free
@@ -106,6 +116,17 @@
       dnf: state=present name={{ item }}
       with_items:
       - vlc
+      - VirtualBox
+
+    - name: Download Atom Editor from GitHub
+      get_url:
+        url: https://atom.io/download/rpm
+        dest: /tmp/atom.x86_64.rpm
+        force: no
+        mode: 0755
+
+    - name: Install Atom Editor
+      dnf: name=/tmp/atom.x86_64.rpm state=present
 
 - name: Fedora user customizations
   hosts: localhost
@@ -115,6 +136,8 @@
       command: /usr/bin/gsettings set org.gnome.desktop.interface gtk-theme "Adwaita-dark"
 
     - name: Setting the Numix icon theme
-      shell: /usr/bin/gsettings set org.gnome.desktop.interface icon-theme "Numix-Circle-Light"
+      command: /usr/bin/gsettings set org.gnome.desktop.interface icon-theme "Numix-Circle-Light"
 
     - debug: msg="Use the command 'gsettings list-keys org.gnome.desktop.interface' to see more options"
+
+    - debug: msg="Remember to download the VirtualBox Extension Pack from https://www.virtualbox.org/wiki/Downloads"
